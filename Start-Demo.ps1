@@ -61,7 +61,7 @@ process {
             Write-Host @hshParamForWritingSimulatedCommand
 
             # Put the current command in the Window Title along with the demo duration
-            $_Duration = [DateTime]::Now – $_StartTime
+            $_Duration = [DateTime]::Now - $_StartTime
             $Host.UI.RawUI.WindowTitle = "[{0}m {1}s]        {2}" -f [int]$_Duration.TotalMinutes, [int]$_Duration.Seconds, $($_Lines[$_i])
             if (([System.String]::IsNullOrEmpty($_SimulatedCommand)) -or $_SimulatedCommand.Trim().StartsWith("#")) {
                 continue
@@ -85,7 +85,7 @@ process {
                     $_i -= 1
                 }
                 "t" {
-                     $_Duration = [DateTime]::Now – $_StartTime
+                     $_Duration = [DateTime]::Now - $_StartTime
                      Write-Host -ForeGroundColor Yellow $("Demo has run {0} Minutes and {1} Seconds" -f [int]$_Duration.TotalMinutes, [int]$_Duration.Seconds)
                      $_i -= 1
                 }
@@ -97,7 +97,7 @@ process {
                 }
                 {$_.StartsWith("!")} {
                     if ($_.Length -eq 1) {
-                        Write-Host -ForeGroundColor Yellow "<Suspended demo – type ‘Exit’ to resume>"
+                        Write-Host -ForeGroundColor Yellow "<Suspended demo - type ‘Exit’ to resume>"
                         $host.EnterNestedPrompt()
                     } else {
                         trap [System.Exception] {Write-Error $_;continue;}
@@ -118,7 +118,7 @@ process {
                     ## if this is not an assignment operation, append " | Out-Default" to the command
                     if ($strItemToInvoke -notmatch "=") {$strItemToInvoke = "$strItemToInvoke | Out-Default"}
                     Invoke-Expression $strItemToInvoke
-                    $_Duration = [DateTime]::Now – $_StartTime
+                    $_Duration = [DateTime]::Now - $_StartTime
                     $Host.UI.RawUI.WindowTitle = "[{0}m {1}s]        {2}" -f [int]$_Duration.TotalMinutes, [int]$_Duration.Seconds, $($_Lines[$_i])
                     [System.Console]::ReadLine()
                 }
@@ -127,7 +127,7 @@ process {
     } ## end try
     catch {$_}
     finally {
-        $_Duration = [DateTime]::Now – $_StartTime
+        $_Duration = [DateTime]::Now - $_StartTime
         Write-Host -ForeGroundColor Yellow $("`n<Demo Complete {0} Minute{1} and {2} Second{3}>" -f [int]$_Duration.TotalMinutes, $(if ([int]$_Duration.TotalMinutes -ne 1) {"s"}), [int]$_Duration.Seconds, $(if ([int]$_Duration.Seconds -ne 1) {"s"}))
         Write-Host -ForeGroundColor Yellow "Done at $([DateTime]::now)"
         $Host.UI.RawUI.WindowTitle = $strOriginalWindowTitle
