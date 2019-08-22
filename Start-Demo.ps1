@@ -29,12 +29,17 @@ param(
     [parameter(Position=0)][ValidateScript({Test-Path -Path $_})][string]$File = ".\demo.txt",
 
     ## Command line number on which to begin the demo
-    [int]$Command = 1
+    [int]$Command = 1,
+
+    ## Prompt string to use. By default, prompt is written as "[<lineNumber>] PS>", like "[51] PS>". A space character will be appended to the end of this prompt string.
+    [string]$Prompt
 )
 
 begin {
     ## grab the current WindowTitle, to use to return this session's WindowTitle back to original after the demo completes
     $strOriginalWindowTitle = $Host.UI.RawUI.WindowTitle
+    ## use custom prompt?
+    $bUseCustomPrompt = $PSBoundParameters.ContainsKey("Prompt")
 } ## end begin
 
 process {
@@ -52,7 +57,7 @@ process {
             ## the line number from the file on which this iteration currently is operating (1-based index, so, $_i + 1) -- used for things like line number display in the simulated prompt
             $strThisLineNumber = $_i + 1
             ## write the prompt
-            $_LinePrompt = "`n[$strThisLineNumber] PS> "
+            $_LinePrompt = if ($bUseCustomPrompt) {"`n$Prompt "} else {"`n[$strThisLineNumber] PS> "}
             Write-Host -NoNewLine $_LinePrompt
             ## write the simulated command after the prompt
             $_SimulatedCommand = $_Lines[$_i]
