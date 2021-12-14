@@ -29,14 +29,14 @@ process {
         Write-Verbose "ParameterSet information for command '$($oThisCommand.Name)'"
         ## foreach parameterset, get the param info; most commonly in PS, we would just emit objects and do something interesting with them down the pipeline, but in this case, with needing all of the items together if doing tabular/grouped output, assigning to a variable for further consumption in this function
         $arrParamsInfo = $oThisCommand | Foreach-Object {$_.ParameterSets} -PipelineVariable oThisParamSet | Foreach-Object {
-            $_.Parameters | Where-Object {$_.Name -NotIn $arrCommonParamsProperties.Name} | Select-Object -Property Name, ParameterType, IsMandatory, IsDynamic, @{n="Position"; e={if ($_.Position -lt 0) {"Named"} else {$_.Position}}}, @{n="Alias"; e={$_.Aliases}}, @{n="ParameterSet"; e={$oThisParamSet.Name}}, @{n="IsDefaultParameterSet"; e={$oThisParamSet.IsDefault}}
+            $_.Parameters | Where-Object {$_.Name -NotIn $arrCommonParamsProperties.Name} | Select-Object -Property Name, ParameterType, IsMandatory, IsDynamic, @{n="Position"; e={if ($_.Position -lt 0) {"Named"} else {$_.Position}}}, @{n="Alias"; e={$_.Aliases}}, @{n="ParameterSet"; e={$oThisParamSet.Name}}, @{n="IsDefaultParameterSet"; e={$oThisParamSet.IsDefault}}, ValueFrom*
         }
         if ($GroupOutput) {
             $hshParamForFormatTable = @{
                 InputObject = $arrParamsInfo
                 AutoSize = $true
                 GroupBy = @{n="ParameterSet"; e={"{0}{1}" -f $_.ParameterSet, $(if ($_.IsDefaultParameterSet) {" (default)"})}}
-                Property = Write-Output Name, ParameterType, IsMandatory, IsDynamic, Position, Alias, ParameterSet
+                Property = (Write-Output Name, ParameterType, IsMandatory, IsDynamic) + @{n="VFP"; e={$_.ValueFromPipeline}}, @{n="VFPBPN"; e={$_.ValueFromPipelineByPropertyName}} + (Write-Output Position, Alias, ParameterSet)
             }
             Format-Table @hshParamForFormatTable
         } else {$arrParamsInfo}
