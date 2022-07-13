@@ -3,6 +3,7 @@ Herein are some useful PowerShell things
 |  Item  | Description |
 |--------|-------------|
 | Get-ArgumentCompleter.ps1 | get the argument completers that are registered in the current PowerShell session; super minor update to the [awesome function](https://gist.github.com/indented-automation/26c637fb530c4b168e62c72582534f5b) by Chris Dent ([@indented-automation](https://github.com/indented-automation) on GitHub)
+| Get-DataFromMemoryStream.ps1 | get data from a System.IO.MemoryStream object (converting the byte array to some goodness); like, the MemoryStream returned from an AWS Lambda function invocation
 | Get-EffectiveFSAccessRule.ps1 | get effective filesystem permissions for users (so as to know exactly the effective permissions, instead of trying to calculate/deduce them by inspecting ACLs)
 | Get-ParameterSetInformation.ps1 | get information about commands' Parameters and ParameterSets; can either get the Parameter objects themselves for further consumption, or can specify that the command return the Parameter information group and in tabular format (handy for human / eyeball consumption)
 | Get-StringCasePermutation.ps1 | Get the character-case permutations of a string (all variations of lower/upper chars for the given string)
