@@ -10,6 +10,7 @@ Herein are some useful PowerShell things
 | Get-StringCasePermutation.ps1 | Get the character-case permutations of a string (all variations of lower/upper chars for the given string)
 | Get-StringCasePermutation_Recursive.ps1 | Get the character-case permutations of a string using recursion (all variations of lower/upper chars for the given string)
 | Invoke-ActivatePythonVirtualenv.ps1 | updated/improved (more "PowerShell-y") way to activate a Python virtual environment; based on the default `activate.ps1` that comes with a virtual environment created by `virtualenv`
+| New-CertificateSigningRequest.ps1 | Make a new X509 Certificate Signing Request with given properties. Uses openssl binary for CSR/key generation
 | Optimize-PSReadlineHistory.ps1 | optimize your PSReadline history file by doing things like removing duplicate command lines (by @rkeithhill)
 | Start-Demo.ps1 | extended version of the beloved `Start-Demo` script for presenting / stepping through code for demo in presentations / talks (which is originally by Jeffrey Snover himself)
 | Test-ArgumentCompleter.ps1 | for testing the registered parameter completer for a specified command, adopted from @lzybkr
