@@ -7,15 +7,12 @@
     By default Get-ArgumentCompleter lists all of the completers registered in the session.
 .EXAMPLE
     Get-ArgumentCompleter
-
     Get all of the argument completers for PowerShell commands in the current session.
 .EXAMPLE
     Get-ArgumentCompleter -CommandName Invoke-ScriptAnalyzer
-
     Get all of the argument completers used by the Invoke-ScriptAnalyzer command.
 .EXAMPLE
     Get-ArgumentCompleter -Native
-
     Get all of the argument completers for native commands in the current session.
 .Notes
     Awesome function by Chris Dent (@indented-automation on GitHub). From gist at https://gist.github.com/indented-automation/26c637fb530c4b168e62c72582534f5b
