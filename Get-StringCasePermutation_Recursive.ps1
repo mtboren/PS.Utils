@@ -1,5 +1,5 @@
 <#  .Description
-    Get the character-case permutations of a string using recursion (all variations of lower/upper chars for the given string)
+    Get the character-case permutations of a string using recursion (all variations of lower/upper chars for the given string). Optimized to proceed if given character is a digit (instead of giving duplicate results)
 
     .Example
     Get-StringCasePermutation_Recursive hi
@@ -28,10 +28,18 @@ begin {
         }
         else {
             Write-Verbose "String is '$String', Prefix is '$prefix'"
-            ## for ToLower and ToUpper, add first char of string to Prefix, set string to "all but first char"
-            #    and, $PSCmdlet.MyInvocation.InvocationName is the name/path of the current script (used since this is an invokable script, instead of a function definition)
-            _Get-StrCasePerm_Recurs -Prefix ($prefix + $String.Substring(0, 1).ToLower()) -String $String.Substring(1)
-            _Get-StrCasePerm_Recurs -Prefix ($prefix + $String.Substring(0, 1).ToUpper()) -String $String.Substring(1)
+            ## if the next character is a digit, recurse on rest of string as is
+            $(if ($String.Substring(0, 1) -match "\d") {"ToString"}
+            ## else, recurse on both lower and upper of next char
+            else {
+                ## for ToLower and ToUpper, add first char of string to Prefix, set string to "all but first char"
+                #    and, $PSCmdlet.MyInvocation.InvocationName is the name/path of the current script (used since this is an invokable script, instead of a function definition)
+                "ToUpper", "ToLower"
+            }) | Foreach-Object {
+                $strThisMethodToInvoke = $_
+                Write-Verbose -Message "Using String method '$_' for substring transformation"
+                _Get-StrCasePerm_Recurs -Prefix ("$prefix{0}" -f $String.Substring(0, 1).psobject.methods.Item($strThisMethodToInvoke).Invoke()) -String $String.Substring(1)
+            }
         }
     }
 }
