@@ -1,5 +1,5 @@
 <#	.Description
-	From a PSCredential object (using the password value), make an encoded password string suitable for use in the AdministratorPassword portion of an unattend.xml Wndows setup answer file
+	Create a credential object whose password value is from an encoded password string (say, from an unattend.xml Windows setup answer file)
 
 	.Example
 	"cwB3AGUAZQB0AFAAYQBzAHMAdwBvAHIAZABBAGQAbQBpAG4AaQBzAHQAcgBhAHQAbwByAFAAYQBzAHMAdwBvAHIAZAA=" | ConvertFrom-UnattendEncodedPassword.ps1 -UsageXMLNode AdministratorPassword
