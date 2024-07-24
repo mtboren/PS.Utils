@@ -1,4 +1,4 @@
-## Examples for `PS.Utils` PowerShell module for doing interesting things
+## Examples for `PS.Utils` PowerShell script collection for doing interesting things
 <style>
 .force-word-wrap pre code {
 	white-space: break-spaces;
@@ -51,7 +51,7 @@ Get-Command Get-Date | Get-ParameterSetInformation.ps1
 Get-Command Get-Date | Get-ParameterSetInformation.ps1 -GroupOutput
 ```
 
-#### `Get-StringCasePermutation_Recursive.ps1`: Get the character-case permutations of a string using recursion (all variations of lower/upper chars for the given string)
+#### `Get-StringCasePermutation_Recursive.ps1`: Get the character-case permutations of a string using recursion (all variations of lower/upper chars for the given string). Optimized to proceed if given character is a digit (instead of giving duplicate results)
 ```PowerShell
 ## Get all the character case permutations for the string 'hi'; the strings returned are hi, hI, Hi, and HI
 Get-StringCasePermutation_Recursive hi
@@ -70,15 +70,6 @@ Invoke-ActivatePythonVirtualenv.ps1 -Path C:\temp\pyVirtualEnvs\myVirtualEnv0
 
 ## Activate the virtual env that resides at the given UNC path. Deactivate the virtual env via Invoke-DeactivatePythonVirtualenv
 Invoke-ActivatePythonVirtualenv.ps1 -Path \\path\to\virtualenvs\someCoolVirtualenv
-```
-
-#### `New-CertificateSigningRequest.ps1`: Make a new X509 Certificate Signing Request with given properties. Uses openssl binary for CSR/key generation
-```PowerShell
-## Create a new CSR  and corresponding private key in c:\temp\newCSR-myserver.dom.com-<someGuid>\ with the given attributes
-New-CertificateSigningRequest.ps1 -SubjectHost myserver.dom.com -HostnameAlias myalias0.dom.com, anotheraliasforthisserver.dom.com -Organization MyCompany -Country US -State Indiana -City Indianapolis -OrganizationalUnit MyTeamName -EmailAddress mygroup@dom.com
-
-## For every row in the given CSV, create a new CSR for each subjecthost in c:\temp\newCSR-<subjecthostname>-<someGuid>\ with the given attributes
-Import-Csv c:\temp\myNewCsrItems.csv | New-CertificateSigningRequest.ps1 -OpenSSLFilespec \\server.dom.com\share\openssl\openssl.exe
 ```
 
 #### `New-MarkdownCommandExample.ps1`: Create Markdown from commands' examples. Useful for, say, an examples.md summary file in the docs for a PowerShell module's repository. And, might get called as a part of a new module "build", so as to have current examples in the module's docs
