@@ -7,6 +7,18 @@
 </style>
 <div class="force-word-wrap">
 
+#### `ConvertFrom-UnattendEncodedPassword.ps1`: From a PSCredential object (using the password value), make an encoded password string suitable for use in the AdministratorPassword portion of an unattend.xml Wndows setup answer file
+```PowerShell
+## Using the given encoded password string (say, from an unattend.xml Windows setup answer file), create a credential object whose password value is that which is encoded in the string
+"cwB3AGUAZQB0AFAAYQBzAHMAdwBvAHIAZABBAGQAbQBpAG4AaQBzAHQAcgBhAHQAbwByAFAAYQBzAHMAdwBvAHIAZAA=" | ConvertFrom-UnattendEncodedPassword.ps1 -UsageXMLNode AdministratorPassword
+```
+
+#### `ConvertTo-UnattendEncodedPassword.ps1`: From a PSCredential object (using the password value), make an encoded password string suitable for use in the AdministratorPassword portion of an unattend.xml Wndows setup answer file
+```PowerShell
+## Using the given credential, convert the password property to an encoded string suitable for use in an unattend.xml Windows setup answer file
+Get-Credential administrator | ConvertTo-UnattendEncodedPassword.ps1 -UsageXMLNode AdministratorPassword
+```
+
 #### `Get-ArgumentCompleter.ps1`: Get custom argument completers registered in the current session.
 
 By default Get-ArgumentCompleter lists all of the completers registered in the session.
@@ -51,6 +63,18 @@ Get-Command Get-Date | Get-ParameterSetInformation.ps1
 Get-Command Get-Date | Get-ParameterSetInformation.ps1 -GroupOutput
 ```
 
+#### `Get-ResourceUtilization.ps1`: Get resource utilization on given Windows machine(s), like CPU and Memory consumption
+```PowerShell
+## Get resource utilization for localhost
+Get-ResourceUtilization.ps1
+
+## Get resource utilization for the given computers
+Get-ResourceUtilization.ps1 -ComputerName puter0, puter1
+
+## Get resource utilization for the given computers using the specified credentials
+Get-ResourceUtilization.ps1 -ComputerName puter0, puter1 -Credential $myCred
+```
+
 #### `Get-StringCasePermutation_Recursive.ps1`: Get the character-case permutations of a string using recursion (all variations of lower/upper chars for the given string). Optimized to proceed if given character is a digit (instead of giving duplicate results)
 ```PowerShell
 ## Get all the character case permutations for the string 'hi'; the strings returned are hi, hI, Hi, and HI
@@ -63,6 +87,12 @@ Get-StringCasePermutation_Recursive hi
 Get-StringCasePermutation hi
 ```
 
+#### `Get-Weather.ps1`: Get the weather for some location
+```PowerShell
+## Get the weather for the default location
+Get-Weather
+```
+
 #### `Invoke-ActivatePythonVirtualenv.ps1`: Function to activate a Python virtualenv, updated to work with UNC paths. Also creates a function, "Invoke-DeactivatePythonVirtualenv" in the current PowerShell session for deactivating the Python virtualenv
 ```PowerShell
 ## Activate the virtual env that resides at the given path. Deactivate the virtual env via Invoke-DeactivatePythonVirtualenv
@@ -70,6 +100,15 @@ Invoke-ActivatePythonVirtualenv.ps1 -Path C:\temp\pyVirtualEnvs\myVirtualEnv0
 
 ## Activate the virtual env that resides at the given UNC path. Deactivate the virtual env via Invoke-DeactivatePythonVirtualenv
 Invoke-ActivatePythonVirtualenv.ps1 -Path \\path\to\virtualenvs\someCoolVirtualenv
+```
+
+#### `New-CertificateSigningRequest.ps1`: Make a new X509 Certificate Signing Request with given properties. Uses openssl binary for CSR/key generation
+```PowerShell
+## Create a new CSR  and corresponding private key in c:\temp\newCSR-myserver.dom.com-<someGuid>\ with the given attributes
+New-CertificateSigningRequest.ps1 -SubjectHost myserver.dom.com -HostnameAlias myalias0.dom.com, anotheraliasforthisserver.dom.com -Organization MyCompany -Country US -State Indiana -City Indianapolis -OrganizationalUnit MyTeamName -EmailAddress mygroup@dom.com
+
+## For every row in the given CSV, create a new CSR for each subjecthost in c:\temp\newCSR-<subjecthostname>-<someGuid>\ with the given attributes
+Import-Csv c:\temp\myNewCsrItems.csv | New-CertificateSigningRequest.ps1 -OpenSSLFilespec \\server.dom.com\share\openssl\openssl.exe
 ```
 
 #### `New-MarkdownCommandExample.ps1`: Create Markdown from commands' examples. Useful for, say, an examples.md summary file in the docs for a PowerShell module's repository. And, might get called as a part of a new module "build", so as to have current examples in the module's docs
