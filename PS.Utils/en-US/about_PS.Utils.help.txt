@@ -1,0 +1,27 @@
+TOPIC
+    about_PS.Utils
+
+SHORT DESCRIPTION
+    Module encapsulating useful functions and code snippets from around
+
+LONG DESCRIPTION
+    A module that centralizes useful functions and code snippets from author and
+    around the world into a proper module.
+
+    When sourced from elsewhere, proper acknowledgement is in place in either the
+    command's help or in the repository's ReadMe (https://github.com/mtboren/PS.Utils)
+
+EXAMPLES
+    All of the cmdlets in this module have proper comment-based help.  Discover
+    and learn via the standard PowerShell way:
+
+        Get-Help -Full <cmdlet-name>
+
+KEYWORDS
+    Utils
+    Utilities
+    FaF
+    Goodness
+
+SEE ALSO
+    https://github.com/mtboren/PS.Utils
