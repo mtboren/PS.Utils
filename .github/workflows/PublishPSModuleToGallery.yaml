@@ -13,7 +13,7 @@ on:
         type: choice
         options:
           - dev
-          - prod
+          - bogus_for_failure_testing
 
 defaults:
   run:
