@@ -1,6 +1,10 @@
 name: Publish PowerShell Module
 
 on:
+  ## for publishing to dev when merged to main
+  push:
+    branches: main
+  ## for publishing to the world -- do so via a GitHub Release
   release:
     types: [released]
 
@@ -46,4 +50,4 @@ jobs:
           Path = (Get-ChildItem -Path . -Recurse -Filter *.psd1).FullName
           Verbose = $true
         }
-        Publish-PSResource @hshParamForPublishPSResource -WhatIf
+        Publish-PSResource @hshParamForPublishPSResource
