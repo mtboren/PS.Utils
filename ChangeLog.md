@@ -2,7 +2,7 @@
 Some things for the releases of this PowerShell module
 
 ## v1.0, released Sep 2024
-- \[new] published as proper PowerShell module (was previously a collection of invokable scripts)
+- \[new] organized now as proper PowerShell module (was previously a collection of invokable scripts)
 
 ## To Do
 Things to do to make this even better.

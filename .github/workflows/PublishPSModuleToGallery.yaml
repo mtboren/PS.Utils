@@ -1,0 +1,48 @@
+name: Publish PowerShell Module
+
+on:
+  release:
+    types: [released]
+
+  workflow_dispatch:
+    inputs:
+      GHDeploymentEnv:
+        description: 'GH Deployment environment to use for this workflow run'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    ## if the event is a release, then the GHDeploymentEnv is prod, else if workflow_dispatch, then use the input, else dev
+    environment: ${{ github.event_name == 'release' && 'prod' || (github.event_name == 'workflow_dispatch' && github.event.inputs.GHDeploymentEnv || 'dev') }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Ensure given PS Gallery is reg'd
+      run: |
+        $hshParamForRegisterPSRepository = @{
+          Name = '${{ vars.PSGALLERY_DISPLAYNAME }}'
+          URI = '${{ vars.PSGALLERY_URI }}'
+          Verbose = $true
+        }
+        Register-PSResourceRepository @hshParamForRegisterPSRepository
+
+    - name: Publish PowerShell Module
+      run: |
+        $hshParamForPublishPSResource = @{
+          ApiKey = ${{ secrets.PSGALLERY_APIKEY }}
+          Repository = '${{ vars.PSGALLERY_DISPLAYNAME }}'
+          Path = (Get-ChildItem -Path . -Recurse -Filter '*.psd1').FullName
+        }
+        Publish-PSResource @hshParamForPublishPSResource -WhatIf
