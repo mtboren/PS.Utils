@@ -24,7 +24,7 @@ defaults:
     shell: pwsh
 
 jobs:
-  publish:
+  PublishPSModule:
     runs-on: ubuntu-latest
     ## if the event is a release, then the GHDeploymentEnv is prod, else if workflow_dispatch, then use the input, else dev
     environment: ${{ github.event_name == 'release' && 'prod' || (github.event_name == 'workflow_dispatch' && github.event.inputs.GHDeploymentEnv || 'dev') }}
