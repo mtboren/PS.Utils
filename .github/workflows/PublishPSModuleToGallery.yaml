@@ -43,6 +43,7 @@ jobs:
         $hshParamForPublishPSResource = @{
           ApiKey = '${{ secrets.PSGALLERY_APIKEY }}'
           Repository = '${{ vars.PSGALLERY_DISPLAYNAME }}'
-          Path = (Get-ChildItem -Path . -Recurse -Filter '*.psd1').FullName
+          Path = (Get-ChildItem -Path . -Recurse -Filter *.psd1).FullName
+          Verbose = $true
         }
         Publish-PSResource @hshParamForPublishPSResource -WhatIf
