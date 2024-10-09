@@ -1,25 +1,22 @@
 function Get-ArgumentCompleter {
-    <#
-.SYNOPSIS
-    Get custom argument completers registered in the current session.
-.DESCRIPTION
-    Get custom argument completers registered in the current session.
-
-    By default Get-ArgumentCompleter lists all of the completers registered in the session.
-.EXAMPLE
-    Get-ArgumentCompleter
-    Get all of the argument completers for PowerShell commands in the current session.
-.EXAMPLE
-    Get-ArgumentCompleter -CommandName Invoke-ScriptAnalyzer
-    Get all of the argument completers used by the Invoke-ScriptAnalyzer command.
-.EXAMPLE
-    Get-ArgumentCompleter -Native
-    Get all of the argument completers for native commands in the current session.
-.Notes
-    Awesome function by Chris Dent (@indented-automation on GitHub). From gist at https://gist.github.com/indented-automation/26c637fb530c4b168e62c72582534f5b
-    Simply made CommandName also a positional parameter, for ease of use.  All credit goes to @indented-automation
-#>
-
+    <#  .Description
+        Get custom argument completers registered in the current session.
+        .Synopsis
+        Get custom argument completers registered in the current session.
+        By default Get-ArgumentCompleter lists all of the completers registered in the session.
+        .Example
+        Get-ArgumentCompleter
+        Get all of the argument completers for PowerShell commands in the current session.
+        .Example
+        Get-ArgumentCompleter -CommandName Invoke-ScriptAnalyzer
+        Get all of the argument completers used by the Invoke-ScriptAnalyzer command.
+        .Example
+        Get-ArgumentCompleter -Native
+        Get all of the argument completers for native commands in the current session.
+        .Notes
+        Awesome function by Chris Dent (@indented-automation on GitHub). From gist at https://gist.github.com/indented-automation/26c637fb530c4b168e62c72582534f5b
+        Simply made CommandName also a positional parameter, for ease of use.  All credit goes to @indented-automation
+    #>
     [CmdletBinding(DefaultParameterSetName = 'PSCommand')]
     param (
         # Filter results by command name.
@@ -82,17 +79,17 @@ function Get-ArgumentCompleter {
 
 
 function Get-DataFromMemoryStream {
-    <#	.Description
-	Get data from a System.IO.MemoryStream object (converting the byte array to some goodness).
+    <#  .Description
+        Get data from a System.IO.MemoryStream object (converting the byte array to some goodness).
 
-	.Example
-	Get-DataFromMemoryStream -InputObject $oMyMemoryStream
-	Get the data from the given MemoryStream object
+        .Example
+        Get-DataFromMemoryStream -InputObject $oMyMemoryStream
+        Get the data from the given MemoryStream object
 
-	.Example
-	Invoke-LMFunction -FunctionName testEnvScr0 -Payload (@{queryStringParameters = @{param0 = "mehhh"}} | ConvertTo-Json -Depth 4) | Get-DataFromMemoryStream
-	Invoke an Amazon Lambda function (which returns an object with a Payload property of type System.IO.MemoryStream), and get the data from the resultant Payload
-#>
+        .Example
+        Invoke-LMFunction -FunctionName testEnvScr0 -Payload (@{queryStringParameters = @{param0 = "mehhh"}} | ConvertTo-Json -Depth 4) | Get-DataFromMemoryStream
+        Invoke an Amazon Lambda function (which returns an object with a Payload property of type System.IO.MemoryStream), and get the data from the resultant Payload
+    #>
     [CmdletBinding()]
     param(
         ## Object(s) whose data to get
@@ -104,23 +101,23 @@ function Get-DataFromMemoryStream {
             $oThisInputObject = $_
             ## using ASCII encoding here; may need to using something else, like UTF8 or so, in the future
             [System.Text.Encoding]::ASCII.GetString($oThisInputObject.ToArray())
-        } ## end Foreach-Object
-    } ## end process
+        }
+    }
 }
 
 
 function Get-EffectiveFSAccessRule {
     <#	.Description
-	Determine effective filesystem permissions for a user, and the ACE from which they come
+        Determine effective filesystem permissions for a user, and the ACE from which they come
 
-	.Example
-	Get-ADUser Mikey | Get-EffectiveFSAccessRule -Path \\some\remote\path\folder, \\some\remote\otherpath
-	Get the effective permissions for this user and at the given remote path
-#>
+        .Example
+        Get-ADUser Mikey | Get-EffectiveFSAccessRule -Path \\some\remote\path\folder, \\some\remote\otherpath
+        Get the effective permissions for this user and at the given remote path
+    #>
     [CmdletBinding()]
     param(
         ## Filesystem path (local or UNC) on which to check permissions; ex: "\\server.dom.com\path\tmp"
-        [parameter(Mandatory = $true)][ValidateScript({ Test-Path $_ })][string[]]$Path,
+        [parameter(Mandatory = $true)][ValidateScript({Test-Path $_})][string[]]$Path,
 
         ## Identity (user -- not group) for which to check rights; ex: "userName" or "username@domain.com"
         [parameter(Mandatory = $true, ValueFromPipelineByPropertyName)][Alias("SamAccountName")][string[]]$Identity
@@ -143,39 +140,39 @@ function Get-EffectiveFSAccessRule {
 
                 ## using Get-Acl, get the AccessRules
                 ## GetAccessRules():  System.Security.AccessControl.AuthorizationRuleCollection GetAccessRules(Boolean includeExplicit, Boolean includeInherited, Type targetType)
-			(Get-Acl $strThisPath).GetAccessRules($bIncludeExplicit, $bIncludeInherited, [System.Security.Principal.NTAccount]) | Foreach-Object {
+                (Get-Acl $strThisPath).GetAccessRules($bIncludeExplicit, $bIncludeInherited, [System.Security.Principal.NTAccount]) | Foreach-Object {
                     ## of type System.Security.AccessControl.FileSystemAccessRule
                     $oThisFilesystemAccessRule = $_
                     ## if WindowsPrincipal is in the role specified by this rule
                     if ($oWindowsPrincipal.IsInRole($oThisFilesystemAccessRule.IdentityReference)) {
                         Write-Verbose "Yes! '$strThisIdentity' is part of '$($oThisFilesystemAccessRule.IdentityReference.Value)'"
                         New-Object -Type PSObject -Property ([ordered]@{
-                                Path              = $strThisPath
-                                ThisIdentity      = $strThisIdentity
-                                FileSystemRights  = $oThisFilesystemAccessRule.FileSystemRights
-                                AccessControlType = $oThisFilesystemAccessRule.AccessControlType
-                                IdentityReference = $oThisFilesystemAccessRule.IdentityReference
-                                IsInherited       = $oThisFilesystemAccessRule.IsInherited
-                                InheritanceFlags  = $oThisFilesystemAccessRule.InheritanceFlags
-                                PropagationFlags  = $oThisFilesystemAccessRule.PropagationFlags
-                            }) ## end new-object
-                    } ## end if
-                    else { Write-Verbose "$strThisIdentity' is not part of '$($oThisFilesystemAccessRule.IdentityReference.Value)'" } ## end else
-                } ## end foreach-object
+                            Path = $strThisPath
+                            ThisIdentity = $strThisIdentity
+                            FileSystemRights = $oThisFilesystemAccessRule.FileSystemRights
+                            AccessControlType = $oThisFilesystemAccessRule.AccessControlType
+                            IdentityReference = $oThisFilesystemAccessRule.IdentityReference
+                            IsInherited = $oThisFilesystemAccessRule.IsInherited
+                            InheritanceFlags = $oThisFilesystemAccessRule.InheritanceFlags
+                            PropagationFlags = $oThisFilesystemAccessRule.PropagationFlags
+                        })
+                    }
+                    else {Write-Verbose "$strThisIdentity' is not part of '$($oThisFilesystemAccessRule.IdentityReference.Value)'"}
+                }
             }
         }
-    } ## end process
+    }
 }
 
 
 function Get-FileEndOfLineType {
     <#	.Description
-	Get the type of end of line ("EOL") character sequences present in the given file(s). If any CRLF, the EOL type for the file is considered "Windows", else, it is considered "Linux"
+        Get the type of end of line ("EOL") character sequences present in the given file(s). If any CRLF, the EOL type for the file is considered "Windows", else, it is considered "Linux"
 
-	.Example
-	Get-Item c:\temp\somefile.sh | Get-FileEndOfLineType
-	Get the EOL type for the given file
-#>
+        .Example
+        Get-Item c:\temp\somefile.sh | Get-FileEndOfLineType
+        Get the EOL type for the given file
+    #>
     [CmdletBinding()]
     param(
         ## The path(s) to the file(s) whose EOL type to determine
@@ -185,10 +182,10 @@ function Get-FileEndOfLineType {
     process {
         $Path | Foreach-Object {
             $oThisFile = $_
-            $strEOLType = if (($strFileContents = Get-Content -Raw $oThisFile) | Select-String "`r`n") { "Windows" } else { if ($strFileContents | Select-String "`n") { "Linux" } else { Write-Verbose -Verbose "no EOL sequences detected at all in file '$($oThisFile.FullName)'. Is it more than one line long?" } }
-            $oThisFile | Select-Object @{n = "EOLSequenceType"; e = { $strEOLType } }, LastWriteTime, Length, Name, FullName
-        } ## end Foreach-Object
-    } ## end process
+            $strEOLType = if (($strFileContents = Get-Content -Raw $oThisFile) | Select-String "`r`n") {"Windows"} else {if ($strFileContents | Select-String "`n") {"Linux"} else {Write-Verbose -Verbose "no EOL sequences detected at all in file '$($oThisFile.FullName)'. Is it more than one line long?"}}
+            $oThisFile | Select-Object @{n = "EOLSequenceType"; e = {$strEOLType}}, LastWriteTime, Length, Name, FullName
+        }
+    }
 }
 
 
@@ -223,35 +220,35 @@ function Get-ParameterSetInformation {
             $oThisCommand = $_
             Write-Verbose "ParameterSet information for command '$($oThisCommand.Name)'"
             ## foreach parameterset, get the param info; most commonly in PS, we would just emit objects and do something interesting with them down the pipeline, but in this case, with needing all of the items together if doing tabular/grouped output, assigning to a variable for further consumption in this function
-            $arrParamsInfo = $oThisCommand | Foreach-Object { $_.ParameterSets } -PipelineVariable oThisParamSet | Foreach-Object {
-                $_.Parameters | Where-Object { $_.Name -NotIn $arrCommonParamsProperties.Name } | Select-Object -Property Name, ParameterType, IsMandatory, IsDynamic, @{n = "Position"; e = { if ($_.Position -lt 0) { "Named" } else { $_.Position } } }, @{n = "Alias"; e = { $_.Aliases } }, @{n = "ParameterSet"; e = { $oThisParamSet.Name } }, @{n = "IsDefaultParameterSet"; e = { $oThisParamSet.IsDefault } }, ValueFrom*
+            $arrParamsInfo = $oThisCommand | Foreach-Object {$_.ParameterSets} -PipelineVariable oThisParamSet | Foreach-Object {
+                $_.Parameters | Where-Object {$_.Name -NotIn $arrCommonParamsProperties.Name} | Select-Object -Property Name, ParameterType, IsMandatory, IsDynamic, @{n = "Position"; e = {if ($_.Position -lt 0) {"Named"} else {$_.Position} } }, @{n = "Alias"; e = {$_.Aliases} }, @{n = "ParameterSet"; e = {$oThisParamSet.Name} }, @{n = "IsDefaultParameterSet"; e = {$oThisParamSet.IsDefault} }, ValueFrom*
             }
             if ($GroupOutput) {
                 $hshParamForFormatTable = @{
                     InputObject = $arrParamsInfo
-                    AutoSize    = $true
-                    GroupBy     = @{n = "ParameterSet"; e = { "{0}{1}" -f $_.ParameterSet, $(if ($_.IsDefaultParameterSet) { " (default)" }) } }
-                    Property    = (Write-Output Name, ParameterType, IsMandatory, IsDynamic) + @{n = "VFP"; e = { $_.ValueFromPipeline } }, @{n = "VFPBPN"; e = { $_.ValueFromPipelineByPropertyName } } + (Write-Output Position, Alias, ParameterSet)
+                    AutoSize = $true
+                    GroupBy = @{n = "ParameterSet"; e = {"{0}{1}" -f $_.ParameterSet, $(if ($_.IsDefaultParameterSet) {" (default)"})}}
+                    Property = (Write-Output Name, ParameterType, IsMandatory, IsDynamic) + @{n = "VFP"; e = {$_.ValueFromPipeline} }, @{n = "VFPBPN"; e = {$_.ValueFromPipelineByPropertyName} } + (Write-Output Position, Alias, ParameterSet)
                 }
                 Format-Table @hshParamForFormatTable
             }
-            else { $arrParamsInfo }
-        } ## end Foreach-Object
+            else {$arrParamsInfo}
+        }
     }
 }
 
 
 function Get-StringCasePermutation_Recursive {
     <#  .Description
-    Get the character-case permutations of a string using recursion (all variations of lower/upper chars for the given string). Optimized to proceed if given character is a digit (instead of giving duplicate results)
+        Get the character-case permutations of a string using recursion (all variations of lower/upper chars for the given string). Optimized to proceed if given character is a digit (instead of giving duplicate results)
 
-    .Example
-    Get-StringCasePermutation_Recursive hi
-    Get all the character case permutations for the string 'hi'; the strings returned are hi, hI, Hi, and HI
+        .Example
+        Get-StringCasePermutation_Recursive hi
+        Get all the character case permutations for the string 'hi'; the strings returned are hi, hI, Hi, and HI
 
-    .Notes
-    Recursion from https://www.reddit.com/r/PowerShell/comments/9ccubs/generate_every_upperlowercase_option_for_word/
-#>
+        .Notes
+        Recursion from https://www.reddit.com/r/PowerShell/comments/9ccubs/generate_every_upperlowercase_option_for_word/
+    #>
     [CmdletBinding()]
     param (
         ## String for which to get all of the character-case permutations
@@ -273,7 +270,7 @@ function Get-StringCasePermutation_Recursive {
             else {
                 Write-Verbose "String is '$String', Prefix is '$prefix'"
                 ## if the next character is a digit, recurse on rest of string as is
-                $(if ($String.Substring(0, 1) -match "\d") { "ToString" }
+                $(if ($String.Substring(0, 1) -match "\d") {"ToString"}
                     ## else, recurse on both lower and upper of next char
                     else {
                         ## for ToLower and ToUpper, add first char of string to Prefix, set string to "all but first char"
@@ -296,12 +293,12 @@ function Get-StringCasePermutation_Recursive {
 
 function Get-StringCasePermutation {
     <#  .Description
-    Get the character-case permutations of a string (all variations of lower/upper chars for the given string)
+        Get the character-case permutations of a string (all variations of lower/upper chars for the given string)
 
-    .Example
-    Get-StringCasePermutation hi
-    Get all the character case permutations for the string 'hi'; the strings returned are hi, hI, Hi, and HI
-#>
+        .Example
+        Get-StringCasePermutation hi
+        Get all the character case permutations for the string 'hi'; the strings returned are hi, hI, Hi, and HI
+    #>
     [CmdletBinding()]
     param (
         ## String for which to get all of the character-case permutations
@@ -322,34 +319,33 @@ function Get-StringCasePermutation {
                 0..($InputObject.Length - 1) | ForEach-Object {
                     $intThisIndexOffset = [int]($strThisIteration_inBinary[$_].ToString())
                     $arrVariations[$intThisIndexOffset][$_]
-                    # $intThisIndexOffset
                 }
             )
         }
-    } ## end process
+    }
 }
 
 
 function Invoke-ActivatePythonVirtualenv {
     <#  .Description
-	Function to activate a Python virtualenv, updated to work with UNC paths. Also creates a function, "Invoke-DeactivatePythonVirtualenv" in the current PowerShell session for deactivating the Python virtualenv
+        Function to activate a Python virtualenv, updated to work with UNC paths. Also creates a function, "Invoke-DeactivatePythonVirtualenv" in the current PowerShell session for deactivating the Python virtualenv
 
-	.Example
-	Invoke-ActivatePythonVirtualenv -Path C:\temp\pyVirtualEnvs\myVirtualEnv0
-	Activate the virtual env that resides at the given path. Deactivate the virtual env via Invoke-DeactivatePythonVirtualenv
+        .Example
+        Invoke-ActivatePythonVirtualenv -Path C:\temp\pyVirtualEnvs\myVirtualEnv0
+        Activate the virtual env that resides at the given path. Deactivate the virtual env via Invoke-DeactivatePythonVirtualenv
 
-	.Example
-	Invoke-ActivatePythonVirtualenv -Path \\path\to\virtualenvs\someCoolVirtualenv
-	Activate the virtual env that resides at the given UNC path. Deactivate the virtual env via Invoke-DeactivatePythonVirtualenv
+        .Example
+        Invoke-ActivatePythonVirtualenv -Path \\path\to\virtualenvs\someCoolVirtualenv
+        Activate the virtual env that resides at the given UNC path. Deactivate the virtual env via Invoke-DeactivatePythonVirtualenv
 
-	.Notes
-	This is originally from a default Python virtualenv Scripts directory
-#>
+        .Notes
+        This is originally from a default Python virtualenv Scripts directory
+    #>
 
     param(
         ## Path to the virtualenv folder to "activate"
         [parameter(Mandatory = $true)][String]$Path
-    ) ## end param
+    )
 
     process {
         ## name of function to make for deactivating python virtualenv
@@ -359,18 +355,18 @@ function Invoke-ActivatePythonVirtualenv {
             if (Test-Path variable:\_OLD_VIRTUAL_PATH) {
                 $env:PATH = $variable:_OLD_VIRTUAL_PATH
                 Remove-Variable "_OLD_VIRTUAL_PATH" -Scope global
-            } ## end if
+            }
 
             if (Test-Path function:\_old_virtual_prompt) {
                 $function:prompt = $function:_old_virtual_prompt
                 Remove-Item function:\_old_virtual_prompt
-            } ## end if
+            }
 
-            if ($env:VIRTUAL_ENV) { Remove-Item env:\VIRTUAL_ENV -ErrorAction SilentlyContinue } ## end if
+            if ($env:VIRTUAL_ENV) {Remove-Item env:\VIRTUAL_ENV -ErrorAction SilentlyContinue}
 
             # Self destruct!
-            if (-not $NonDestructive) { Remove-Item function:\Invoke-DeactivatePythonVirtualenv }
-        } ## end fn
+            if (-not $NonDestructive) {Remove-Item function:\Invoke-DeactivatePythonVirtualenv}
+        }
 
         # unset irrelevant variables
         & global:$strDeactivate_fnName -NonDestructive
@@ -381,35 +377,35 @@ function Invoke-ActivatePythonVirtualenv {
         $global:_OLD_VIRTUAL_PATH = $env:PATH
         $env:PATH = "$env:VIRTUAL_ENV/Scripts;" + $env:PATH
         if (! $env:VIRTUAL_ENV_DISABLE_PROMPT) {
-            function global:_old_virtual_prompt { "" }
+            function global:_old_virtual_prompt {""}
             $function:_old_virtual_prompt = $function:prompt
             function global:prompt {
                 # Add a prefix to the current prompt
                 Write-Host "($(split-path $env:VIRTUAL_ENV -leaf)) " -nonewline
                 & $function:_old_virtual_prompt
-            } ## end fn
-        } ## end if
+            }
+        }
 
         Write-Verbose -Verbose "Virtualenv 'activated'. Use function '$strDeactivate_fnName' to deactivate this virtualenv"
-    } ## end process
+    }
 }
 
 
 function New-CertificateSigningRequest {
     <#	.Description
-	Make a new X509 Certificate Signing Request with given properties. Uses openssl binary for CSR/key generation
+        Make a new X509 Certificate Signing Request with given properties. Uses openssl binary for CSR/key generation
 
-	.Notes
-	Based on code by the vScorpion from Feb 2016
+        .Notes
+        Based on code by the vScorpion from Feb 2016
 
-	.Example
-	New-CertificateSigningRequest -SubjectHost myserver.dom.com -HostnameAlias myalias0.dom.com, anotheraliasforthisserver.dom.com -Organization MyCompany -Country US -State Indiana -City Indianapolis -OrganizationalUnit MyTeamName -EmailAddress mygroup@dom.com
-	Create a new CSR  and corresponding private key in c:\temp\newCSR-myserver.dom.com-<someGuid>\ with the given attributes
+        .Example
+        New-CertificateSigningRequest -SubjectHost myserver.dom.com -HostnameAlias myalias0.dom.com, anotheraliasforthisserver.dom.com -Organization MyCompany -Country US -State Indiana -City Indianapolis -OrganizationalUnit MyTeamName -EmailAddress mygroup@dom.com
+        Create a new CSR  and corresponding private key in c:\temp\newCSR-myserver.dom.com-<someGuid>\ with the given attributes
 
-	.Example
-	Import-Csv c:\temp\myNewCsrItems.csv | New-CertificateSigningRequest -OpenSSLFilespec \\server.dom.com\share\openssl\openssl.exe
-	For every row in the given CSV, create a new CSR for each subjecthost in c:\temp\newCSR-<subjecthostname>-<someGuid>\ with the given attributes
-#>
+        .Example
+        Import-Csv c:\temp\myNewCsrItems.csv | New-CertificateSigningRequest -OpenSSLFilespec \\server.dom.com\share\openssl\openssl.exe
+        For every row in the given CSV, create a new CSR for each subjecthost in c:\temp\newCSR-<subjecthostname>-<someGuid>\ with the given attributes
+    #>
     [CmdLetBinding()]
 
     Param(
@@ -423,7 +419,7 @@ function New-CertificateSigningRequest {
         [parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)][String[]]$HostnameAlias,
 
         ## Organization name to use (like company name, say)
-        [parameter(ValueFromPipelineByPropertyName = $true)][String]$Organization = "Eli Lilly and Company",
+        [parameter(ValueFromPipelineByPropertyName = $true)][String]$Organization = "MyCompany",
 
         ## Two-letter country code
         [parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)][ValidateLength(2, 2)][String]$Country,
@@ -441,13 +437,13 @@ function New-CertificateSigningRequest {
         [parameter(ValueFromPipelineByPropertyName = $true)][String]$EmailAddress,
 
         ## Path to openssl.exe for use in generating CSR (defaults to "C:\Program Files\OpenSSL\bin\openssl.exe")
-        [ValidateScript({ Test-Path $_ })][String]$OpenSSLFilespec = "C:\Program Files\OpenSSL\bin\openssl.exe"
+        [ValidateScript({Test-Path $_})][String]$OpenSSLFilespec = "C:\Program Files\OpenSSL\bin\openssl.exe"
     )
 
     process {
         $strBaseOutputDir = "c:\temp\newCSR-{0}-{1}" -f $SubjectHost, [System.Guid]::NewGuid().Guid
         Try {
-            if (-not (Test-Path "$strBaseOutputDir")) { $oTmp = mkdir "$strBaseOutputDir" }
+            if (-not (Test-Path "$strBaseOutputDir")) {$oTmp = mkdir "$strBaseOutputDir"}
         }
         Catch {
             Throw "Encountered issue creating '$strBaseOutputDir'. Please address this and then try again"
@@ -460,10 +456,10 @@ function New-CertificateSigningRequest {
         ## a string for the SAN field that is the IPv4 IPs for the given machine -- not currently used (would include this in the "subjectAltName" portion of the openssl config body below)
         # $strIP = if ($IncludeIP) {"IP:{0}" -f (Get-Wmiobject Win32_NetworkAdapterConfiguration | Where-Object {$_.IPEnabled} | Select-Object -ExpandProperty IPAddress | Where-Object {$_ -match "(\d{1,3}.){3}\d{1,3}"})} else {$null}
         ## the full subjecthost to use of the local machine (only get/use if SubjectHost was not provided as a param)
-        $strSubjectHostToUse = if ($PSBoundParameters.ContainsKey("SubjectHost")) { $SubjectHost } else { ([System.Net.DNS]::GetHostByName($SubjectHost) | Select-Object -Expand HostName).ToLower() }
+        $strSubjectHostToUse = if ($PSBoundParameters.ContainsKey("SubjectHost")) {$SubjectHost} else {([System.Net.DNS]::GetHostByName($SubjectHost) | Select-Object -Expand HostName).ToLower()}
 
         ## make, for the hostname and aliases, a string like "DNS:hostname.dom.com, DNS:alias0.dom.com, DNS:alias1.dom.com"
-        $strHostnameAndAliases_commaJoined = ($strSubjectHostToUse, $HostnameAlias | Foreach-Object { $_ } | Where-Object { -not [String]::IsNullOrEmpty($_) } | Foreach-Object { "DNS:$_" }) -join ", "
+        $strHostnameAndAliases_commaJoined = ($strSubjectHostToUse, $HostnameAlias | Foreach-Object {$_} | Where-Object {-not [String]::IsNullOrEmpty($_)} | Foreach-Object {"DNS:$_"}) -join ", "
         ## string to use for CSR creation config file body
         $strOpenSSLConfigBody = @"
 [ req ]
@@ -504,7 +500,7 @@ $(if ($PSBoundParameters.ContainsKey('EmailAddress')) {"emailAddress='$EmailAddr
         Write-Verbose -Verbose "To test decrypting the new private key, use the command (and enter the password you used to generate the CSR/key pair):"
         Write-Verbose -Verbose "  $OpenSSLFilespec rsa -in $strBaseOutputDir\${SubjectHost}.key"
         Get-Item -Path $strBaseOutputDir\$strNewCSRFilename
-    } ## end process
+    }
 }
 
 
@@ -532,19 +528,19 @@ function New-MarkdownCommandExample {
     begin {
         function New-CodeBlockFromExample {
             <#  .Description
-			Internal function to make the contents of a Markdown code block, based on the PowerShell version in which the function is running.
-			For the given example, make string like:
-			## example's comment line 0 here
-			## example's comment line 1 here
-			## example's comment line ... here
-			example's actual code here
+                Internal function to make the contents of a Markdown code block, based on the PowerShell version in which the function is running.
+                For the given example, make string like:
+                ## example's comment line 0 here
+                ## example's comment line 1 here
+                ## example's comment line ... here
+                example's actual code here
 
-			.Example
-			Get-Help -Name Get-Date -Example | New-CodeBlockFromExample
+                .Example
+                Get-Help -Name Get-Date -Example | New-CodeBlockFromExample
 
-			.Notes
-			PowerShell versions' MamlCommandHelpInfo#examples objects differ between Windows PowerShell (PS v1-5) and PowerShell (v6+). Thus, this function, so as to be able to consistently render Markdown examples, taking said differences into account.
-		#>
+                .Notes
+                PowerShell versions' MamlCommandHelpInfo#examples objects differ between Windows PowerShell (PS v1-5) and PowerShell (v6+). Thus, this function, so as to be able to consistently render Markdown examples, taking said differences into account.
+            #>
             param (
                 ## The .example property's value from a MamlCommandHelpInfo#examples object, for which to return a Markdown string of an example
                 [parameter(Mandatory = $true, ValueFromPipelineByPropertyName = $true)][System.Management.Automation.PSObject[]]$Example
@@ -555,18 +551,18 @@ function New-MarkdownCommandExample {
                     ## note:  joining with newline here to make single string, so as to then be able to join multiple examples with two new lines later
                     ## if this is running in Windows PowerShell (version of less than v6)
                     $(if ($PSVersionTable.PSVersion -lt [System.Version]"6.0") {
-                            $_.remarks.Text | Where-Object { -not [System.String]::IsNullOrEmpty($_) } | Foreach-Object { $_.Split("`n") } | Foreach-Object { "## $_" }
-                            $_.code
-                        }
-                        ## else, it's PowerShell (v6+)
-                        else {
-                            $arrCodeLines = $_.code | Where-Object { -not [System.String]::IsNullOrEmpty($_) } | Foreach-Object { $_.Split("`n") }
-                            $arrCodeLines | Select-Object -Skip 1 | Foreach-Object { "## $_" }
-                            $arrCodeLines | Select-Object -First 1
-                        }) -join "`n"
+                        $_.remarks.Text | Where-Object {-not [System.String]::IsNullOrEmpty($_)} | Foreach-Object {$_.Split("`n")} | Foreach-Object {"## $_"}
+                        $_.code
+                    }
+                    ## else, it's PowerShell (v6+)
+                    else {
+                        $arrCodeLines = $_.code | Where-Object {-not [System.String]::IsNullOrEmpty($_)} | Foreach-Object {$_.Split("`n")}
+                        $arrCodeLines | Select-Object -Skip 1 | Foreach-Object {"## $_"}
+                        $arrCodeLines | Select-Object -First 1
+                    }) -join "`n"
                 }
             }
-        } ## end function
+        }
 
         ## Return the title string
         $Title
@@ -586,7 +582,7 @@ function New-MarkdownCommandExample {
         $Command | Foreach-Object {
             $oThisCommand = $_
             ## get the help (with examples) for this command
-            $oHelp_ThisCommand = Get-Help -Examples -Name $(if ($oThisCommand.Name -like "*.ps1" -or $oThisCommand.CommandType -eq "ExternalScript") { $oThisCommand.Source } else { $oThisCommand.Name })
+            $oHelp_ThisCommand = Get-Help -Examples -Name $(if ($oThisCommand.Name -like "*.ps1" -or $oThisCommand.CommandType -eq "ExternalScript") {$oThisCommand.Source} else {$oThisCommand.Name})
             ## make a string that has the command name and description followed by a code block with example(s)
             "`n#### ``{0}``: {1}" -f `
                 $oThisCommand.Name,
@@ -594,11 +590,11 @@ function New-MarkdownCommandExample {
             ## "open" the code-fence in Markdown
             '```PowerShell'
             ## make a string with the example description(s) and example code(s) for this command
-            if (($oHelp_ThisCommand.examples | Measure-Object).Count -gt 0) { ($oHelp_ThisCommand.examples | New-CodeBlockFromExample) -join "`n`n" } else { "## no examples for command '$($oThisCommand.Name)'" }
+            if (($oHelp_ThisCommand.examples | Measure-Object).Count -gt 0) {($oHelp_ThisCommand.examples | New-CodeBlockFromExample) -join "`n`n"} else {"## no examples for command '$($oThisCommand.Name)'"}
 
             ## "close" the code-fence in Markdown
             '```'
-        } ## end Foreach-Object
+        }
     }
 
     end {
@@ -683,14 +679,14 @@ function Optimize-PSReadlineHistory {
     $commands = New-Object System.Collections.Generic.List[string] -ArgumentList $history.Length
     $uniqCommands = New-Object System.Collections.Generic.List[string] -ArgumentList $history.Length
 
-    $comparer = if ($IsLinux) { [System.StringComparer]::Ordinal } else { [System.StringComparer]::OrdinalIgnoreCase }
+    $comparer = if ($IsLinux) {[System.StringComparer]::Ordinal} else {[System.StringComparer]::OrdinalIgnoreCase}
     $uniqCommandSet = New-Object System.Collections.Generic.HashSet[string] -ArgumentList $comparer
 
     $numCommands = 0
     $numMinLengthCommandsRemoved = 0
     $numMultilineCommands = 0
 
-    $whatIfMsg = if ($PSBoundParameters['WhatIf']) { 'WHAT IF: ' } else { '' }
+    $whatIfMsg = if ($PSBoundParameters['WhatIf']) {'WHAT IF: '} else {''}
     $activityMsg = "${whatIfMsg}Optimizing $HistoryPath"
 
     # Process multiline commands in the history file contents
@@ -770,7 +766,7 @@ function Optimize-PSReadlineHistory {
             }
         }
         finally {
-            if ($writer) { $writer.Dispose() }
+            if ($writer) {$writer.Dispose()}
         }
 
         $newFileSize = (Get-Item -LiteralPath $HistoryPath).Length
@@ -826,7 +822,7 @@ function Start-Demo {
 #>
     param(
         ## Path to the script file which to demo
-        [parameter(Position = 0)][ValidateScript({ Test-Path -Path $_ })][string]$File = ".\demo.txt",
+        [parameter(Position = 0)][ValidateScript({Test-Path -Path $_})][string]$File = ".\demo.txt",
 
         ## Command line number on which to begin the demo
         [int]$Command = 1,
@@ -840,7 +836,7 @@ function Start-Demo {
         $strOriginalWindowTitle = $Host.UI.RawUI.WindowTitle
         ## use custom prompt?
         $bUseCustomPrompt = $PSBoundParameters.ContainsKey("Prompt")
-    } ## end begin
+    }
 
     process {
         Clear-Host
@@ -857,12 +853,12 @@ function Start-Demo {
                 ## the line number from the file on which this iteration currently is operating (1-based index, so, $_i + 1) -- used for things like line number display in the simulated prompt
                 $strThisLineNumber = $_i + 1
                 ## write the prompt
-                $_LinePrompt = if ($bUseCustomPrompt) { "`n$Prompt " } else { "`n[$strThisLineNumber] PS> " }
+                $_LinePrompt = if ($bUseCustomPrompt) {"`n$Prompt "} else {"`n[$strThisLineNumber] PS> "}
                 Write-Host -NoNewLine $_LinePrompt
                 ## write the simulated command after the prompt
                 $_SimulatedCommand = $_Lines[$_i]
                 $hshParamForWritingSimulatedCommand = @{NoNewLine = $true; Object = $_SimulatedCommand }
-                if ($_SimulatedCommand.Trim().StartsWith("#")) { $hshParamForWritingSimulatedCommand["ForeGroundColor"] = "Green" }
+                if ($_SimulatedCommand.Trim().StartsWith("#")) {$hshParamForWritingSimulatedCommand["ForeGroundColor"] = "Green"}
                 Write-Host @hshParamForWritingSimulatedCommand
 
                 # Put the current command in the Window Title along with the demo duration
@@ -870,7 +866,7 @@ function Start-Demo {
                 $Host.UI.RawUI.WindowTitle = "[{0}m {1}s]        {2}" -f [int]$_Duration.TotalMinutes, [int]$_Duration.Seconds, $($_Lines[$_i])
                 if (([System.String]::IsNullOrEmpty($_SimulatedCommand)) -or $_SimulatedCommand.Trim().StartsWith("#")) {
                     continue
-                } ## end if
+                }
                 $_input = [System.Console]::ReadLine()
                 switch ($_input) {
                     "?" {
@@ -881,12 +877,12 @@ function Start-Demo {
                         Write-Host -ForeGroundColor Yellow "<Quit demo>"
                         return
                     }
-                    "s" { Write-Host -ForeGroundColor Yellow "<Skipping command from line $strThisLineNumber>" }
+                    "s" {Write-Host -ForeGroundColor Yellow "<Skipping command from line $strThisLineNumber>"}
                     "d" {
                         for ($_ni = 0; $_ni -lt $_lines.Count; $_ni++) {
-                            if ($_i -eq $_ni) { Write-Host -ForeGroundColor Red ("*" * 80) }
+                            if ($_i -eq $_ni) {Write-Host -ForeGroundColor Red ("*" * 80)}
                             Write-Host -ForeGroundColor Yellow ("[{0,2}] {1}" -f $_ni, $_lines[$_ni])
-                        } ## end for
+                        }
                         $_i -= 1
                     }
                     "t" {
@@ -894,51 +890,51 @@ function Start-Demo {
                         Write-Host -ForeGroundColor Yellow $("Demo has run {0} Minutes and {1} Seconds" -f [int]$_Duration.TotalMinutes, [int]$_Duration.Seconds)
                         $_i -= 1
                     }
-                    { $_.StartsWith("f") } {
+                    {$_.StartsWith("f")} {
                         for ($_ni = 0; $_ni -lt $_lines.Count; $_ni++) {
-                            if ($_lines[$_ni] -match $_.SubString(1)) { Write-Host -ForeGroundColor Yellow ("[{0,2}] {1}" -f $_ni, $_lines[$_ni]) }
-                        } ## end for
+                            if ($_lines[$_ni] -match $_.SubString(1)) {Write-Host -ForeGroundColor Yellow ("[{0,2}] {1}" -f $_ni, $_lines[$_ni])}
+                        }
                         $_i -= 1
                     }
-                    { $_.StartsWith("!") } {
+                    {$_.StartsWith("!")} {
                         if ($_.Length -eq 1) {
                             Write-Host -ForeGroundColor Yellow "<Suspended demo - type ?Exit? to resume>"
                             $host.EnterNestedPrompt()
                         }
                         else {
-                            trap [System.Exception] { Write-Error $_; continue; }
+                            trap [System.Exception] {Write-Error $_; continue;}
                             Invoke-Expression $($_.SubString(1) + "| out-host")
-                        } ## end else
+                        }
                         $_i -= 1
                     }
-                    { $_ -match "^#\d+$" } {
+                    {$_ -match "^#\d+$"} {
                         ## "- 2" to make up for zero-based index and 1-based line numbers in a file
                         $_i = [int]($_.SubString(1)) - 2
                         continue
                     }
                     default {
-                        trap [System.Exception] { Write-Error $_; continue; }
+                        trap [System.Exception] {Write-Error $_; continue;}
                         $strItemToInvoke = $_lines[$_i]
                         ## if caller appended some tidbit, prefixed with a space (as in, attempted to edit the line), add their edit to the item to invoke
-                        if ($_input -match "^ .+") { $strItemToInvoke += $_input }
+                        if ($_input -match "^ .+") {$strItemToInvoke += $_input}
                         ## if this is not an assignment operation, append " | Out-Default" to the command
-                        if ($strItemToInvoke -notmatch "=") { $strItemToInvoke = "$strItemToInvoke | Out-Default" }
+                        if ($strItemToInvoke -notmatch "=") {$strItemToInvoke = "$strItemToInvoke | Out-Default"}
                         Invoke-Expression $strItemToInvoke
                         $_Duration = [DateTime]::Now - $_StartTime
                         $Host.UI.RawUI.WindowTitle = "[{0}m {1}s]        {2}" -f [int]$_Duration.TotalMinutes, [int]$_Duration.Seconds, $($_Lines[$_i])
                         [System.Console]::ReadLine()
                     }
-                } ## end switch
-            } ## end for
-        } ## end try
-        catch { $_ }
+                }
+            }
+        }
+        catch {$_}
         finally {
             $_Duration = [DateTime]::Now - $_StartTime
-            Write-Host -ForeGroundColor Yellow $("`n<Demo Complete {0} Minute{1} and {2} Second{3}>" -f [int]$_Duration.TotalMinutes, $(if ([int]$_Duration.TotalMinutes -ne 1) { "s" }), [int]$_Duration.Seconds, $(if ([int]$_Duration.Seconds -ne 1) { "s" }))
+            Write-Host -ForeGroundColor Yellow $("`n<Demo Complete {0} Minute{1} and {2} Second{3}>" -f [int]$_Duration.TotalMinutes, $(if ([int]$_Duration.TotalMinutes -ne 1) {"s"}), [int]$_Duration.Seconds, $(if ([int]$_Duration.Seconds -ne 1) {"s"}))
             Write-Host -ForeGroundColor Yellow "Done at $([DateTime]::now)"
             $Host.UI.RawUI.WindowTitle = $strOriginalWindowTitle
-        } ## end finally
-    } ## end process
+        }
+    }
 
     <#PSScriptInfo
 
@@ -1024,7 +1020,7 @@ function Test-ArgumentCompleter {
             ## if there is a completer registered, invoke its definition with some params
             & $completer.Definition $CommandName $ParameterName $WordToComplete $commandAst $FakeBoundParameters
         }
-        else { throw "No argument completer registered for command '$CommandName' and paramater '$ParameterName'" }
+        else {throw "No argument completer registered for command '$CommandName' and paramater '$ParameterName'"}
     }
 }
 
