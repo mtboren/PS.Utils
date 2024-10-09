@@ -1025,3 +1025,166 @@ function Test-ArgumentCompleter {
 }
 
 
+function ConvertFrom-UnattendEncodedPassword {
+    <#	.Description
+        Create a credential object whose password value is from an encoded password string (say, from an unattend.xml Windows setup answer file)
+
+        .Example
+        "cwB3AGUAZQB0AFAAYQBzAHMAdwBvAHIAZABBAGQAbQBpAG4AaQBzAHQAcgBhAHQAbwByAFAAYQBzAHMAdwBvAHIAZAA=" | ConvertFrom-UnattendEncodedPassword -UsageXMLNode AdministratorPassword
+        Using the given encoded password string (say, from an unattend.xml Windows setup answer file), create a credential object whose password value is that which is encoded in the string
+
+        .Notes
+        The UsageXMLNode refers to the XML node in the Unattend.xml answer file in which the encoded password shall be used. That node name is used in the encoding/decoding of the string in combination with the password value itself.
+    #>
+    [CmdletBinding()]
+    [OutputType([System.Management.Automation.PSCredential])]
+    param(
+        ## Encoded password from which to create a credential object
+        [parameter(Mandatory = $true, ValueFromPipeline = $true)][String[]]$EncodedPassword,
+
+        ## XML node name in which credential shall be used (Like "Password" or "AdministratorPassword")
+        [parameter(Mandatory = $true)][ValidateSet("Password", "AdministratorPassword")][String]$UsageXMLNode
+    )
+
+    process {
+        $EncodedPassword | Foreach-Object {
+            ## From a legitimate, encoded AdministratorPassword string, create a PSCredential
+            $strPlaintextPasswd = ([System.Text.Encoding]::Unicode.GetChars([System.Convert]::FromBase64String($_)) -join "") -replace "$UsageXMLNode`$", ""
+            New-Object System.Management.Automation.PsCredential("someUser", (ConvertTo-SecureString -String $strPlaintextPasswd -AsPlainText))
+        }
+    }
+}
+
+
+function ConvertTo-UnattendEncodedPassword {
+    <#	.Description
+        From a PSCredential object (using the password value), make an encoded password string suitable for use in the AdministratorPassword portion of an unattend.xml Wndows setup answer file
+
+        .Example
+        Get-Credential administrator | ConvertTo-UnattendEncodedPassword -UsageXMLNode AdministratorPassword
+        Using the given credential, convert the password property to an encoded string suitable for use in an unattend.xml Windows setup answer file
+
+        .Notes
+        The UsageXMLNode refers to the XML node in the Unattend.xml answer file in which the encoded password shall be used. That node name is used in the encoding/decoding of the string in combination with the password value itself.
+    #>
+    [CmdletBinding()]
+    param(
+        ## Credential whose password to encode into a string
+        [parameter(Mandatory = $true, ValueFromPipeline = $true)][System.Management.Automation.PSCredential]$Credential,
+
+        ## XML node name in which credential shall be used (Like "Password" or "AdministratorPassword")
+        [parameter(Mandatory = $true)][ValidateSet("Password", "AdministratorPassword")][String]$UsageXMLNode
+    )
+
+    process {
+        $Credential | Foreach-Object {
+            ## get the Unicode bytes of the string that is the password suffixed by the string "AdministratorPassword", which is apparently what the unattend answer file encoded password expects
+            [System.Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes("$($_.GetNetworkCredential().Password)$UsageXMLNode"))
+        }
+    }
+}
+
+
+function Get-ResourceUtilization {
+    <#	.Description
+        Get resource utilization on given Windows machine(s), like CPU and Memory consumption
+
+        .Example
+        Get-ResourceUtilization
+        Get resource utilization for localhost
+
+        .Example
+        Get-ResourceUtilization -ComputerName puter0, puter1
+        Get resource utilization for the given computers
+
+        .Example
+        Get-ResourceUtilization -ComputerName puter0, puter1 -Credential $myCred
+        Get resource utilization for the given computers using the specified credentials
+    #>
+    param(
+        ## Name(s) of Windows computer(s) for which to get resource utilization. If none, will get information for localhost
+        [String[]]$ComputerName,
+
+        ## Credential to use for remote computer
+        [System.Management.Automation.PSCredential]$Credential
+    )
+
+    process {
+        $hshParamForGetCimInstance = @{}
+        if ($PSBoundParameters.ContainsKey("ComputerName")) {
+            $hshParamForNewCimSession = @{ComputerName = $ComputerName }
+            if ($PSBoundParameters.ContainsKey("Credential")) {$hshParamForNewCimSession["Credential"] = $Credential}
+            $hshParamForGetCimInstance["CimSession"] = New-CimSession @hshParamForNewCimSession
+        }
+        ## get processor and memory info
+        $arrProcessorInfo = Get-CimInstance @hshParamForGetCimInstance -Class Win32_Processor -Property LoadPercentage
+        $arrOSInfo = Get-CimInstance @hshParamForGetCimInstance -Class Win32_OperatingSystem -Property FreePhysicalMemory, TotalVisibleMemorySize
+        $arrProcessorInfo, $arrOSInfo | Foreach-Object {$_} | Group-Object PSComputerName | Foreach-Object {
+            $oProcessorInfo_thisComputer = $_.Group | Where-Object {$_.CimClass -match "Win32_Processor$"}
+            $oOSInfo_thisComputer = $_.Group | Where-Object {$_.CimClass -match "Win32_OperatingSystem$"}
+            ## get the average LoadPercentage (useful when there is more than one processor)
+            $mioProcessorUsage = $oProcessorInfo_thisComputer | Measure-Object -Property LoadPercentage -Average
+            ## make a new object with a few choice properties
+            New-Object -Type PSObject -Property ([ordered]@{
+                    ComputerName = if ($PSBoundParameters.ContainsKey("ComputerName")) {$_.Name} else {${env:ComputerName}.ToLower()}
+                    NumCPU = $mioProcessorUsage.Count
+                    CPUUsedPct = $mioProcessorUsage.Average
+                    MemUsedPct = [Math]::Round(($oOSInfo_thisComputer.TotalVisibleMemorySize - $oOSInfo_thisComputer.FreePhysicalMemory) / $oOSInfo_thisComputer.TotalVisibleMemorySize * 100, 1)
+                })
+        }
+    }
+    end {
+        ## if this created any CIM sessions, remove them
+        if ($hshParamForGetCimInstance["CimSession"]) {$hshParamForGetCimInstance["CimSession"] | Remove-CimSession}
+    }
+}
+
+
+function Get-Weather {
+    <#	.Description
+        Get the weather for some location
+
+        .Notes
+        Uses https://wttr.in for the forecast information
+        See https://wttr.in/:help for other options
+
+        .Example
+        Get-Weather
+        Get the weather for the default location
+    #>
+    [CmdletBinding()]
+    param(
+        ## Location(s) for which to get weather information. Takes things like city name, any location ("Eiffel Tower"), unicode name of any location in any language ("??????"), airport code (3 letters, like "IND"), domain name ("@stackoverflow.com"), "area code" (possibly a postal code?) ("94107"), GPS coordinate ("-78.46,106.79")
+        [String[]]$Location = "Indianapolis",
+
+        ## Switch: Get "narrow" format for each day (just day & night's weather)
+        [Switch]$Narrow,
+
+        ## Switch: no color / ANSI terminal sequences?
+        [Switch]$NoColor,
+
+        ## Units for return. One of u, m, or M: US Customary system, metric (SI) with wind in km/h, or metric (SI) with wind in m/s
+        [ValidateSet("u","m","M", IgnoreCase=$false)][String]$Unit = "u"
+    )
+
+    begin {
+        $oConfig = @{
+            ## Web URI of the weather forecast service
+            strWebURI = "https://wttr.in"
+            arrQueryStringItems = & {
+                if ($Narrow) {"n"}
+                if ($NoColor) {"T"}
+                $Unit
+            }
+        }
+    }
+
+    process {
+        $Location | Foreach-Object {
+            $strThisLocation = $_
+            $hshParamForInvokeRestMethod = @{URI = ($oConfig.strWebURI, $strThisLocation -join "/"), ($oConfig.arrQueryStringItems -join "") -join "?" }
+            Write-Verbose -Message "Using REST URI of '$($hshParamForInvokeRestMethod.URI)'"
+            Invoke-RestMethod @hshParamForInvokeRestMethod
+        }
+    }
+}
